@@ -37,6 +37,16 @@ jobs:
           node-version: 22.12.0
           registry-url: https://registry.npmjs.org
 
+      - name: Verify npm auth secret
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_KEY || secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          if [[ -z "${NODE_AUTH_TOKEN}" ]]; then
+            echo "Missing npm auth secret. Expected NPM_KEY or NPM_TOKEN." >&2
+            exit 1
+          fi
+
       - name: Determine publish version
         id: version
         shell: bash
@@ -59,10 +69,10 @@ jobs:
         if: steps.version.outputs.type == 'release'
         run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_KEY }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_KEY || secrets.NPM_TOKEN }}
 
       - name: Publish canary
         if: steps.version.outputs.type == 'canary'
         run: npm publish --tag canary
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_KEY }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_KEY || secrets.NPM_TOKEN }}
