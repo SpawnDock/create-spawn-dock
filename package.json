@@ -21,7 +21,8 @@
   },
   "files": [
     "README.md",
-    "packages/app/dist"
+    "packages/app/dist",
+    "packages/app/template-nextjs-overlay"
   ],
   "bin": {
     "create-spawn-dock": "./packages/app/dist/src/app/main.js"

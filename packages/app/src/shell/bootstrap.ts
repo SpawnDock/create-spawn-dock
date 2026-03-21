@@ -1,5 +1,6 @@
-import { mkdirSync, readdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
 import { spawnSync, type SpawnSyncReturns } from "node:child_process"
+import { fileURLToPath } from "node:url"
 import { dirname, join, resolve } from "node:path"
 import { Effect } from "effect"
 import {
@@ -7,8 +8,13 @@ import {
   type BootstrapClaim,
   type BootstrapSummary,
   type CliOptions,
+  patchPackageJsonContent,
   resolveProjectContext,
 } from "../core/bootstrap.js"
+
+const TEMPLATE_OVERLAY_DIR = resolve(
+  fileURLToPath(new URL("../../../template-nextjs-overlay", import.meta.url)),
+)
 
 export const bootstrapProject = (
   options: CliOptions,
@@ -24,6 +30,7 @@ export const bootstrapProject = (
     yield* ensureEmptyProjectDir(projectDir)
     yield* ensureParentDirectory(projectDir)
     yield* cloneTemplateRepo(projectDir, options.templateRepo, options.templateBranch)
+    yield* applyTemplateOverlay(projectDir)
 
     const claim = yield* claimProject(
       options.controlPlaneUrl,
@@ -88,6 +95,33 @@ const cloneTemplateRepo = (
     templateRepo,
     projectDir,
   ]).pipe(Effect.asVoid)
+
+const applyTemplateOverlay = (projectDir: string): Effect.Effect<void, Error> =>
+  Effect.gen(function* () {
+    yield* copyOverlayTree(TEMPLATE_OVERLAY_DIR, projectDir)
+    yield* patchPackageJson(projectDir)
+  })
+
+const copyOverlayTree = (
+  sourceDir: string,
+  targetDir: string,
+): Effect.Effect<void, Error> =>
+  Effect.try({
+    try: () => {
+      copyOverlayTreeSync(sourceDir, targetDir)
+    },
+    catch: toError,
+  })
+
+const patchPackageJson = (projectDir: string): Effect.Effect<void, Error> =>
+  Effect.try({
+    try: () => {
+      const packageJsonPath = join(projectDir, "package.json")
+      const content = readFileSync(packageJsonPath, "utf8")
+      writeFileSync(packageJsonPath, patchPackageJsonContent(content), "utf8")
+    },
+    catch: toError,
+  })
 
 const claimProject = (
   controlPlaneUrl: string,
@@ -250,3 +284,22 @@ const isNodeError = (error: unknown): error is NodeJS.ErrnoException =>
 
 const toError = (cause: unknown): Error =>
   cause instanceof Error ? cause : new Error(String(cause))
+
+const copyOverlayTreeSync = (sourceDir: string, targetDir: string): void => {
+  const entries = readdirSync(sourceDir, { withFileTypes: true })
+
+  for (const entry of entries) {
+    const sourcePath = join(sourceDir, entry.name)
+    const targetPath = join(targetDir, entry.name)
+
+    if (entry.isDirectory()) {
+      mkdirSync(targetPath, { recursive: true })
+      copyOverlayTreeSync(sourcePath, targetPath)
+      continue
+    }
+
+    const content = readFileSync(sourcePath, "utf8")
+    mkdirSync(dirname(targetPath), { recursive: true })
+    writeFileSync(targetPath, content, "utf8")
+  }
+}
