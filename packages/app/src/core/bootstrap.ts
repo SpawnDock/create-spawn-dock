@@ -41,6 +41,11 @@ export interface GeneratedFile {
   readonly content: string
 }
 
+export interface OverlayFile {
+  readonly path: string
+  readonly content: string
+}
+
 export const normalizeDisplayName = (value: string): string =>
   value
     .split(/[^a-zA-Z0-9]+/g)
@@ -172,4 +177,26 @@ export const buildGeneratedFiles = (
       content: buildTonConnectManifest(context, claim),
     },
   ]
+}
+
+export const patchPackageJsonContent = (input: string): string => {
+  const packageJson = JSON.parse(input) as {
+    dependencies?: Record<string, string>
+    devDependencies?: Record<string, string>
+    scripts?: Record<string, string>
+  }
+
+  packageJson.scripts = {
+    ...(packageJson.scripts ?? {}),
+    dev: "node ./spawndock/dev.mjs",
+    "dev:next": "node ./spawndock/next.mjs",
+    "dev:tunnel": "node ./spawndock/tunnel.mjs",
+  }
+
+  packageJson.devDependencies = {
+    ...(packageJson.devDependencies ?? {}),
+    "@spawn-dock/dev-tunnel": "latest",
+  }
+
+  return `${JSON.stringify(packageJson, null, 2)}\n`
 }

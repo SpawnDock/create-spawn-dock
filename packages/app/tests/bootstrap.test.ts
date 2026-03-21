@@ -3,6 +3,7 @@ import {
   buildGeneratedFiles,
   buildMcpServerUrl,
   normalizeDisplayName,
+  patchPackageJsonContent,
   resolveProjectContext,
 } from "../src/core/bootstrap.js"
 
@@ -28,7 +29,7 @@ describe("buildMcpServerUrl", () => {
 })
 
 describe("buildGeneratedFiles", () => {
-  it("creates runtime files without storing template overlay", () => {
+  it("creates runtime files for the overlaid starter", () => {
     const files = buildGeneratedFiles(
       {
         templateId: "nextjs-template",
@@ -51,5 +52,21 @@ describe("buildGeneratedFiles", () => {
     expect(fileMap.get("opencode.json")).toContain("\"MCP_SERVER_URL\": \"https://api.example.com/mcp/sse\"")
     expect(fileMap.get("public/tonconnect-manifest.json")).toContain("\"url\": \"https://api.example.com/preview/demo-project\"")
     expect(fileMap.get("spawndock.dev-tunnel.json")).toContain("\"projectSlug\": \"demo-project\"")
+  })
+})
+
+describe("patchPackageJsonContent", () => {
+  it("injects overlay scripts and tunnel dependency", () => {
+    const output = patchPackageJsonContent(
+      JSON.stringify({
+        name: "demo",
+        scripts: { build: "next build" },
+      }),
+    )
+
+    expect(output).toContain("\"dev\": \"node ./spawndock/dev.mjs\"")
+    expect(output).toContain("\"dev:next\": \"node ./spawndock/next.mjs\"")
+    expect(output).toContain("\"dev:tunnel\": \"node ./spawndock/tunnel.mjs\"")
+    expect(output).toContain("\"@spawn-dock/dev-tunnel\": \"latest\"")
   })
 })

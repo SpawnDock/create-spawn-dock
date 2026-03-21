@@ -6,10 +6,11 @@ This repository now follows an `effect-template`-style layout:
 
 - root workspace with `packages/app`
 - TypeScript + Effect entrypoint
-- no embedded TMA starter overlay inside the CLI repo
+- built-in TMA overlay bundled inside the CLI repo
 
-The canonical TMA starter lives only in `https://github.com/SpawnDock/tma-project`.
-`create-spawn-dock` clones that repo and writes only project-specific runtime files.
+The canonical TMA starter lives in `https://github.com/SpawnDock/tma-project`.
+`create-spawn-dock` clones that repo, applies the bundled SpawnDock TMA overlay,
+and then writes project-specific runtime files.
 
 ## Usage
 
@@ -32,6 +33,18 @@ npx @spawn-dock/create-spawn-dock --token <pairing-token> [project-dir]
 - `spawndock.dev-tunnel.json`
 - `opencode.json`
 - `public/tonconnect-manifest.json`
+
+## Built-in Overlay
+
+The package also ships a built-in TMA overlay and applies it after cloning
+`SpawnDock/tma-project`. This overlay is responsible for:
+
+- `spawndock/dev.mjs`
+- `spawndock/next.mjs`
+- `spawndock/tunnel.mjs`
+- `next.config.ts`
+- `public/tonconnect-manifest.json`
+- patching project scripts and `@spawn-dock/dev-tunnel`
 
 Generated MCP config points to `<controlPlaneUrl>/mcp/sse`.
 
