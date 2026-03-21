@@ -8,6 +8,12 @@ SpawnDock bootstrap CLI for local TMA projects.
 npx create-spawn-dock --token <pairing-token> [project-dir]
 ```
 
+Until the npm package is published, run it directly from GitHub:
+
+```bash
+npx --yes github:SpawnDock/create-spawn-dock#main --token <pairing-token> [project-dir]
+```
+
 ## What it does
 
 - clones `SpawnDock/tma-project`
