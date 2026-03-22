@@ -1,11 +1,23 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
+const readNumber = (value) => {
+  if (typeof value !== "string" || value.length === 0) {
+    return undefined
+  }
+
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
 export const readSpawndockConfig = (cwd = process.cwd()) =>
   JSON.parse(readFileSync(resolve(cwd, "spawndock.config.json"), "utf8"))
 
+export const resolveConfiguredLocalPort = (config, env = process.env) =>
+  readNumber(env.SPAWNDOCK_PORT) ?? Number(config.localPort ?? 3000)
+
 export const resolveLocalOrigin = (config) =>
-  `http://127.0.0.1:${config.localPort ?? 3000}`
+  `http://127.0.0.1:${resolveConfiguredLocalPort(config)}`
 
 export const resolvePreviewOrigin = (config) =>
   config.previewOrigin ?? ""

@@ -1,12 +1,26 @@
 import { spawn } from "node:child_process"
 import readline from "node:readline"
 
-import { readSpawndockConfig, resolveAllowedDevOrigins } from "./config.mjs"
+import {
+  readSpawndockConfig,
+  resolveAllowedDevOrigins,
+  resolveConfiguredLocalPort,
+} from "./config.mjs"
+import { findAvailablePort } from "./port.mjs"
 
 const config = readSpawndockConfig()
-const localPort = Number(config.localPort ?? 3000)
+const requestedLocalPort = resolveConfiguredLocalPort(config)
+const localPort = process.env.SPAWNDOCK_PORT
+  ? requestedLocalPort
+  : await findAvailablePort(requestedLocalPort)
 const allowedOrigins = resolveAllowedDevOrigins(config)
 const previewOrigin = config.previewOrigin ?? ""
+
+if (localPort !== requestedLocalPort) {
+  console.warn(
+    `SpawnDock local port ${requestedLocalPort} is busy, using ${localPort} instead.`
+  )
+}
 
 const child = spawn("pnpm", ["exec", "next", "dev", "-p", String(localPort)], {
   cwd: process.cwd(),
