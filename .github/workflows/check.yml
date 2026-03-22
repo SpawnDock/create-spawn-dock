@@ -14,7 +14,18 @@ concurrency:
 permissions: {}
 
 jobs:
-  check:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+      - run: pnpm build
+
+  types:
+    name: Types
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -22,5 +33,13 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/setup
       - run: pnpm typecheck
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dependencies
+        uses: ./.github/actions/setup
       - run: pnpm test
-      - run: pnpm build
