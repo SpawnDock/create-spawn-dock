@@ -16,6 +16,12 @@ describe("parseArgs", () => {
     expect(result.projectDir).toBe("my-project")
   })
 
+  it("reads project id overrides", () => {
+    const result = parseArgs(["--token=abc", "--project-id", "project_123", "my-project"])
+
+    expect(result.projectId).toBe("project_123")
+  })
+
   it("reads control plane URL from environment", () => {
     const result = parseArgs(
       ["--token", "abc", "my-project"],

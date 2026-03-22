@@ -7,6 +7,7 @@ export const TEMPLATE_ID = "nextjs-template"
 
 export interface CliOptions {
   readonly token: string
+  readonly projectId?: string
   readonly controlPlaneUrl: string
   readonly claimPath: string
   readonly projectDir: string
@@ -49,6 +50,7 @@ export interface OverlayFile {
 }
 
 export const DEFAULT_MCP_AGENTS = ["OpenCode", "Claude Code"] as const
+export const MIN_NODE_MAJOR = 20
 
 export const normalizeDisplayName = (value: string): string =>
   value
@@ -85,6 +87,31 @@ export const buildMcpServerUrl = (controlPlaneUrl: string): string => {
   return url.toString()
 }
 
+export const resolveClaimPath = (claimPath: string, projectId?: string): string => {
+  const normalizedClaimPath = claimPath.startsWith("/") ? claimPath : `/${claimPath}`
+
+  if (projectId && normalizedClaimPath.includes(":projectId")) {
+    return normalizedClaimPath.replace(":projectId", projectId)
+  }
+
+  if (projectId && normalizedClaimPath === DEFAULT_CLAIM_PATH) {
+    return `/api/projects/${projectId}/claim`
+  }
+
+  return normalizedClaimPath
+}
+
+export const validateNodeMajorVersion = (version: string): string | null => {
+  const match = /^v?(\d+)/.exec(version)
+  const major = match ? Number.parseInt(match[1] ?? "", 10) : Number.NaN
+
+  if (!Number.isFinite(major) || major >= MIN_NODE_MAJOR) {
+    return null
+  }
+
+  return `SpawnDock requires Node.js ${MIN_NODE_MAJOR}+ (detected ${version}). Install a newer Node release from https://nodejs.org/.`
+}
+
 export const buildCodexMcpCommandArgs = (mcpServerUrl: string, mcpApiKey: string): ReadonlyArray<string> => [
   "mcp",
   "add",
@@ -108,6 +135,37 @@ export const buildTonConnectManifest = (
       url: claim.previewOrigin,
       name: context.projectName,
       iconUrl: `${claim.previewOrigin}/favicon.ico`,
+    },
+    null,
+    2,
+  )}\n`
+
+export const buildProjectMcpConfig = (): string =>
+  `${JSON.stringify(
+    {
+      mcpServers: {
+        spawndock: {
+          type: "stdio",
+          command: "node",
+          args: ["./spawndock/mcp.mjs"],
+        },
+      },
+    },
+    null,
+    2,
+  )}\n`
+
+export const buildOpenCodeConfig = (): string =>
+  `${JSON.stringify(
+    {
+      $schema: "https://opencode.ai/config.json",
+      mcp: {
+        spawndock: {
+          type: "local",
+          command: ["node", "./spawndock/mcp.mjs"],
+          enabled: true,
+        },
+      },
     },
     null,
     2,
@@ -177,6 +235,14 @@ export const buildGeneratedFiles = (
       path: "public/tonconnect-manifest.json",
       content: buildTonConnectManifest(context, claim),
     },
+    {
+      path: ".mcp.json",
+      content: buildProjectMcpConfig(),
+    },
+    {
+      path: "opencode.json",
+      content: buildOpenCodeConfig(),
+    },
   ]
 }
 
@@ -192,10 +258,13 @@ export const patchPackageJsonContent = (input: string): string => {
     dev: "node ./spawndock/dev.mjs",
     "dev:next": "node ./spawndock/next.mjs",
     "dev:tunnel": "node ./spawndock/tunnel.mjs",
+    "publish:github-pages": "node ./spawndock/publish.mjs",
+    "agent:session": "spawn-dock session",
   }
 
   packageJson.devDependencies = {
     ...(packageJson.devDependencies ?? {}),
+    "@spawn-dock/cli": "latest",
     "@spawn-dock/dev-tunnel": "latest",
     "@spawn-dock/mcp": "latest",
   }

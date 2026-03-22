@@ -8,6 +8,7 @@ import {
   buildGeneratedFiles,
   buildMcpServerUrl,
   DEFAULT_MCP_AGENTS,
+  resolveClaimPath,
   type BootstrapClaim,
   type BootstrapSummary,
   type CliOptions,
@@ -38,6 +39,7 @@ export const bootstrapProject = (
     const claim = yield* claimProject(
       options.controlPlaneUrl,
       options.claimPath,
+      options.projectId,
       {
         token: options.token,
         ["projectSlug"]: context.projectSlug,
@@ -131,12 +133,13 @@ const patchPackageJson = (projectDir: string): Effect.Effect<void, Error> =>
 const claimProject = (
   controlPlaneUrl: string,
   claimPath: string,
+  projectId: string | undefined,
   payload: Record<string, string | number>,
 ): Effect.Effect<BootstrapClaim, Error> =>
   Effect.tryPromise({
     try: async () => {
       const normalizedControlPlaneUrl = controlPlaneUrl.replace(/\/$/, "")
-      const resolvedClaimPath = claimPath.startsWith("/") ? claimPath : `/${claimPath}`
+      const resolvedClaimPath = resolveClaimPath(claimPath, projectId)
       const response = await fetch(`${normalizedControlPlaneUrl}${resolvedClaimPath}`, {
         method: "POST",
         headers: {
@@ -146,7 +149,9 @@ const claimProject = (
       })
 
       if (!response.ok) {
-        throw new Error(`SpawnDock control plane claim failed: ${response.status}`)
+        const body = await response.json().catch(async () => ({ error: await response.text().catch(() => "") }))
+        const errorCode = isRecord(body) ? readString(body, "error") : null
+        throw new Error(formatClaimError(response.status, errorCode))
       }
 
       const json = (await response.json()) as unknown
@@ -354,6 +359,22 @@ const isNodeError = (error: unknown): error is NodeJS.ErrnoException =>
 
 const toError = (cause: unknown): Error =>
   cause instanceof Error ? cause : new Error(String(cause))
+
+const formatClaimError = (status: number, errorCode: string | null): string => {
+  if (status === 410 || errorCode === "TokenExpired") {
+    return "Pairing token expired. Create a new project in the SpawnDock bot and rerun bootstrap."
+  }
+
+  if (status === 409 || errorCode === "TokenAlreadyClaimed") {
+    return "Pairing token was already used. Create a new project in the SpawnDock bot and rerun bootstrap."
+  }
+
+  if (status === 404 || errorCode === "TokenNotFound" || errorCode === "project_not_found") {
+    return "Pairing token is invalid for this project. Create a new project in the SpawnDock bot and rerun bootstrap."
+  }
+
+  return `SpawnDock control plane claim failed: ${status}`
+}
 
 const copyOverlayTreeSync = (sourceDir: string, targetDir: string): void => {
   const entries = readdirSync(sourceDir, { withFileTypes: true })

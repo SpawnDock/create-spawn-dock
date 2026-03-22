@@ -1,5 +1,5 @@
 import { Console, Effect, pipe } from "effect"
-import type { BootstrapSummary } from "../core/bootstrap.js"
+import { type BootstrapSummary, validateNodeMajorVersion } from "../core/bootstrap.js"
 import { bootstrapProject } from "../shell/bootstrap.js"
 import { formatUsage, readCliOptions } from "../shell/cli.js"
 
@@ -15,6 +15,12 @@ const formatSuccess = (summary: BootstrapSummary): string =>
 
 const cliProgram = pipe(
   readCliOptions,
+  Effect.flatMap((options) => {
+    const nodeVersionError = validateNodeMajorVersion(process.version)
+    return nodeVersionError === null
+      ? Effect.succeed(options)
+      : Effect.fail(new Error(nodeVersionError))
+  }),
   Effect.flatMap((options) =>
     options.token.length > 0
       ? bootstrapProject(options)
