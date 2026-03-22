@@ -140,6 +140,37 @@ export const buildTonConnectManifest = (
     2,
   )}\n`
 
+export const buildProjectMcpConfig = (): string =>
+  `${JSON.stringify(
+    {
+      mcpServers: {
+        spawndock: {
+          type: "stdio",
+          command: "node",
+          args: ["./spawndock/mcp.mjs"],
+        },
+      },
+    },
+    null,
+    2,
+  )}\n`
+
+export const buildOpenCodeConfig = (): string =>
+  `${JSON.stringify(
+    {
+      $schema: "https://opencode.ai/config.json",
+      mcp: {
+        spawndock: {
+          type: "local",
+          command: ["node", "./spawndock/mcp.mjs"],
+          enabled: true,
+        },
+      },
+    },
+    null,
+    2,
+  )}\n`
+
 export const buildGeneratedFiles = (
   context: ProjectContext,
   claim: BootstrapClaim,
@@ -204,6 +235,14 @@ export const buildGeneratedFiles = (
       path: "public/tonconnect-manifest.json",
       content: buildTonConnectManifest(context, claim),
     },
+    {
+      path: ".mcp.json",
+      content: buildProjectMcpConfig(),
+    },
+    {
+      path: "opencode.json",
+      content: buildOpenCodeConfig(),
+    },
   ]
 }
 
@@ -220,10 +259,12 @@ export const patchPackageJsonContent = (input: string): string => {
     "dev:next": "node ./spawndock/next.mjs",
     "dev:tunnel": "node ./spawndock/tunnel.mjs",
     "publish:github-pages": "node ./spawndock/publish.mjs",
+    "agent:session": "spawn-dock session",
   }
 
   packageJson.devDependencies = {
     ...(packageJson.devDependencies ?? {}),
+    "@spawn-dock/cli": "latest",
     "@spawn-dock/dev-tunnel": "latest",
     "@spawn-dock/mcp": "latest",
   }

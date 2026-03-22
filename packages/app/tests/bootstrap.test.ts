@@ -3,6 +3,8 @@ import {
   buildCodexMcpCommandArgs,
   buildGeneratedFiles,
   buildMcpServerUrl,
+  buildOpenCodeConfig,
+  buildProjectMcpConfig,
   normalizeDisplayName,
   patchPackageJsonContent,
   resolveProjectContext,
@@ -69,6 +71,16 @@ describe("buildCodexMcpCommandArgs", () => {
   })
 })
 
+describe("generated tool configs", () => {
+  it("builds project MCP config", () => {
+    expect(buildProjectMcpConfig()).toContain("\"./spawndock/mcp.mjs\"")
+  })
+
+  it("builds opencode config", () => {
+    expect(buildOpenCodeConfig()).toContain("\"https://opencode.ai/config.json\"")
+  })
+})
+
 describe("buildGeneratedFiles", () => {
   it("creates runtime files for the overlaid starter", () => {
     const files = buildGeneratedFiles(
@@ -91,10 +103,12 @@ describe("buildGeneratedFiles", () => {
 
     const fileMap = new Map(files.map((file) => [file.path, file.content]))
 
-    expect(fileMap.has("opencode.json")).toBe(false)
-    expect(fileMap.has(".mcp.json")).toBe(false)
+    expect(fileMap.has("opencode.json")).toBe(true)
+    expect(fileMap.has(".mcp.json")).toBe(true)
     expect(fileMap.get("spawndock.config.json")).toContain("\"mcpServerUrl\": \"https://api.example.com/mcp/sse\"")
     expect(fileMap.get("spawndock.config.json")).toContain("\"mcpApiKey\": \"mcp_key_123\"")
+    expect(fileMap.get("opencode.json")).toContain("./spawndock/mcp.mjs")
+    expect(fileMap.get(".mcp.json")).toContain("./spawndock/mcp.mjs")
     expect(fileMap.get("public/tonconnect-manifest.json")).toContain("\"url\": \"https://api.example.com/preview/demo-project\"")
     expect(fileMap.get("spawndock.dev-tunnel.json")).toContain("\"projectSlug\": \"demo-project\"")
   })
@@ -113,6 +127,8 @@ describe("patchPackageJsonContent", () => {
     expect(output).toContain("\"dev:next\": \"node ./spawndock/next.mjs\"")
     expect(output).toContain("\"dev:tunnel\": \"node ./spawndock/tunnel.mjs\"")
     expect(output).toContain("\"publish:github-pages\": \"node ./spawndock/publish.mjs\"")
+    expect(output).toContain("\"agent:session\": \"spawn-dock session\"")
+    expect(output).toContain("\"@spawn-dock/cli\": \"latest\"")
     expect(output).toContain("\"@spawn-dock/dev-tunnel\": \"latest\"")
     expect(output).toContain("\"@spawn-dock/mcp\": \"latest\"")
   })
