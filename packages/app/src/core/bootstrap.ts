@@ -7,6 +7,7 @@ export const TEMPLATE_ID = "nextjs-template"
 
 export interface CliOptions {
   readonly token: string
+  readonly projectId?: string
   readonly controlPlaneUrl: string
   readonly claimPath: string
   readonly projectDir: string
@@ -49,6 +50,7 @@ export interface OverlayFile {
 }
 
 export const DEFAULT_MCP_AGENTS = ["OpenCode", "Claude Code"] as const
+export const MIN_NODE_MAJOR = 20
 
 export const normalizeDisplayName = (value: string): string =>
   value
@@ -83,6 +85,31 @@ export const buildMcpServerUrl = (controlPlaneUrl: string): string => {
   const normalizedPath = url.pathname.replace(/\/$/, "")
   url.pathname = normalizedPath.length > 0 ? `${normalizedPath}/mcp/sse` : "/mcp/sse"
   return url.toString()
+}
+
+export const resolveClaimPath = (claimPath: string, projectId?: string): string => {
+  const normalizedClaimPath = claimPath.startsWith("/") ? claimPath : `/${claimPath}`
+
+  if (projectId && normalizedClaimPath.includes(":projectId")) {
+    return normalizedClaimPath.replace(":projectId", projectId)
+  }
+
+  if (projectId && normalizedClaimPath === DEFAULT_CLAIM_PATH) {
+    return `/api/projects/${projectId}/claim`
+  }
+
+  return normalizedClaimPath
+}
+
+export const validateNodeMajorVersion = (version: string): string | null => {
+  const match = /^v?(\d+)/.exec(version)
+  const major = match ? Number.parseInt(match[1] ?? "", 10) : Number.NaN
+
+  if (!Number.isFinite(major) || major >= MIN_NODE_MAJOR) {
+    return null
+  }
+
+  return `SpawnDock requires Node.js ${MIN_NODE_MAJOR}+ (detected ${version}). Install a newer Node release from https://nodejs.org/.`
 }
 
 export const buildCodexMcpCommandArgs = (mcpServerUrl: string, mcpApiKey: string): ReadonlyArray<string> => [
@@ -192,6 +219,7 @@ export const patchPackageJsonContent = (input: string): string => {
     dev: "node ./spawndock/dev.mjs",
     "dev:next": "node ./spawndock/next.mjs",
     "dev:tunnel": "node ./spawndock/tunnel.mjs",
+    "publish:github-pages": "node ./spawndock/publish.mjs",
   }
 
   packageJson.devDependencies = {

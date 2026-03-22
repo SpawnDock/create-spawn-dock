@@ -18,6 +18,7 @@ export const parseArgs = (
 ): CliOptions => {
   const result: {
     token: string
+    projectId?: string
     controlPlaneUrl: string
     claimPath: string
     projectDir: string
@@ -58,6 +59,17 @@ export const parseArgs = (
 
     if (value.startsWith("--control-plane-url=")) {
       result.controlPlaneUrl = value.slice("--control-plane-url=".length)
+      continue
+    }
+
+    if (value === "--project-id") {
+      result.projectId = argv[index + 1] ?? ""
+      index += 1
+      continue
+    }
+
+    if (value.startsWith("--project-id=")) {
+      result.projectId = value.slice("--project-id=".length)
       continue
     }
 

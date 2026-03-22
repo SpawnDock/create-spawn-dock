@@ -6,6 +6,8 @@ import {
   normalizeDisplayName,
   patchPackageJsonContent,
   resolveProjectContext,
+  resolveClaimPath,
+  validateNodeMajorVersion,
 } from "../src/core/bootstrap.js"
 
 describe("normalizeDisplayName", () => {
@@ -26,6 +28,26 @@ describe("resolveProjectContext", () => {
 describe("buildMcpServerUrl", () => {
   it("builds the prefixed mcp url", () => {
     expect(buildMcpServerUrl("https://api.example.com")).toBe("https://api.example.com/mcp/sse")
+  })
+})
+
+describe("resolveClaimPath", () => {
+  it("prefers a project-specific claim route when a project id is available", () => {
+    expect(resolveClaimPath("/v1/bootstrap/claim", "project_123")).toBe("/api/projects/project_123/claim")
+  })
+
+  it("substitutes the :projectId placeholder when present", () => {
+    expect(resolveClaimPath("/projects/:projectId/claim", "project_123")).toBe("/projects/project_123/claim")
+  })
+})
+
+describe("validateNodeMajorVersion", () => {
+  it("accepts supported Node.js versions", () => {
+    expect(validateNodeMajorVersion("v20.10.0")).toBeNull()
+  })
+
+  it("returns a helpful message for unsupported Node.js versions", () => {
+    expect(validateNodeMajorVersion("v18.20.0")).toContain("Node.js 20+")
   })
 })
 
@@ -90,6 +112,7 @@ describe("patchPackageJsonContent", () => {
     expect(output).toContain("\"dev\": \"node ./spawndock/dev.mjs\"")
     expect(output).toContain("\"dev:next\": \"node ./spawndock/next.mjs\"")
     expect(output).toContain("\"dev:tunnel\": \"node ./spawndock/tunnel.mjs\"")
+    expect(output).toContain("\"publish:github-pages\": \"node ./spawndock/publish.mjs\"")
     expect(output).toContain("\"@spawn-dock/dev-tunnel\": \"latest\"")
     expect(output).toContain("\"@spawn-dock/mcp\": \"latest\"")
   })
