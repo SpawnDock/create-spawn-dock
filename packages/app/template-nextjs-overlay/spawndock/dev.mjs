@@ -1,14 +1,28 @@
 import { spawn } from "node:child_process"
 import { setTimeout } from "node:timers"
 
-const scripts = [
-  ["node", ["spawndock/next.mjs"]],
-  ["node", ["spawndock/tunnel.mjs"]],
-]
+import { readSpawndockConfig, resolveConfiguredLocalPort } from "./config.mjs"
+import { findAvailablePort, waitForPort } from "./port.mjs"
 
 const children = []
+let shuttingDown = false
+
+const config = readSpawndockConfig()
+const requestedLocalPort = resolveConfiguredLocalPort(config)
+const localPort = await findAvailablePort(requestedLocalPort)
+const sharedEnv = {
+  ...process.env,
+  SPAWNDOCK_PORT: String(localPort),
+}
+
+if (localPort !== requestedLocalPort) {
+  console.warn(
+    `SpawnDock local port ${requestedLocalPort} is busy, using ${localPort} instead.`
+  )
+}
 
 const stopChildren = (signal) => {
+  shuttingDown = true
   for (const child of children) {
     if (!child.killed) {
       child.kill(signal ?? "SIGTERM")
@@ -26,10 +40,10 @@ process.on("SIGTERM", () => {
   process.exit(0)
 })
 
-for (const [command, args] of scripts) {
+const spawnChild = (command, args) => {
   const child = spawn(command, args, {
     cwd: process.cwd(),
-    env: process.env,
+    env: sharedEnv,
     stdio: "inherit",
   })
 
@@ -41,7 +55,17 @@ for (const [command, args] of scripts) {
       process.exit(code)
     }
   })
+
+  return child
 }
+
+const nextChild = spawnChild("node", ["spawndock/next.mjs"])
+
+await waitForPort(localPort, {
+  isCancelled: () => shuttingDown || nextChild.exitCode !== null,
+})
+
+spawnChild("node", ["spawndock/tunnel.mjs"])
 
 setTimeout(() => {
   console.log("SpawnDock dev session is ready.")
