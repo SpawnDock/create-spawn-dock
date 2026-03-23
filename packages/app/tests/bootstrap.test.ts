@@ -96,6 +96,7 @@ describe("buildGeneratedFiles", () => {
         projectSlug: "demo-project",
         controlPlaneUrl: "https://api.example.com",
         previewOrigin: "https://api.example.com/preview/demo-project",
+        telegramMiniAppUrl: "https://t.me/TMASpawnerBot/tma?startapp=demo-project",
         deviceSecret: "secret_123",
         mcpApiKey: "mcp_key_123",
         localPort: 3000,
@@ -108,6 +109,7 @@ describe("buildGeneratedFiles", () => {
     expect(fileMap.has(".mcp.json")).toBe(true)
     expect(fileMap.get("spawndock.config.json")).toContain("\"mcpServerUrl\": \"https://api.example.com/mcp/sse\"")
     expect(fileMap.get("spawndock.config.json")).toContain("\"mcpApiKey\": \"mcp_key_123\"")
+    expect(fileMap.get("spawndock.config.json")).toContain("\"telegramMiniAppUrl\": \"https://t.me/TMASpawnerBot/tma?startapp=demo-project\"")
     expect(fileMap.get("opencode.json")).toContain("./spawndock/mcp.mjs")
     expect(fileMap.get(".mcp.json")).toContain("./spawndock/mcp.mjs")
     expect(fileMap.get("public/tonconnect-manifest.json")).toContain("\"url\": \"https://api.example.com/preview/demo-project\"")

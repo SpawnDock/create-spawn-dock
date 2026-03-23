@@ -395,6 +395,7 @@ const parseClaimResponse = (
     readString(input, "launchUrl") ??
     readString(input, "staticAssetsBaseUrl") ??
     readString(input, "url")
+  const telegramMiniAppUrl = readString(input, "telegramMiniAppUrl")
   const deviceSecret =
     readString(input, "deviceSecret") ??
     readString(input, "deviceToken") ??
@@ -422,6 +423,7 @@ const parseClaimResponse = (
     projectSlug,
     controlPlaneUrl,
     previewOrigin,
+    ...(telegramMiniAppUrl ? { telegramMiniAppUrl } : {}),
     deviceSecret,
     mcpApiKey,
     localPort,
