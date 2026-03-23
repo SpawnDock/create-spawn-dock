@@ -29,6 +29,7 @@ export interface BootstrapClaim {
   readonly projectSlug: string
   readonly controlPlaneUrl: string
   readonly previewOrigin: string
+  readonly telegramMiniAppUrl?: string
   readonly deviceSecret: string
   readonly mcpApiKey: string
   readonly localPort: number
@@ -193,6 +194,7 @@ export const buildGeneratedFiles = (
     projectName: context.projectName,
     controlPlaneUrl: claim.controlPlaneUrl,
     previewOrigin: claim.previewOrigin,
+    ...(claim.telegramMiniAppUrl ? { telegramMiniAppUrl: claim.telegramMiniAppUrl } : {}),
     previewPath,
     previewHost,
     localPort: claim.localPort,
