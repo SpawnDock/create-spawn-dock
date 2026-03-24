@@ -7,8 +7,15 @@ export const DEFAULT_TEMPLATE_BRANCH = "master"
 export const GENERATED_PACKAGE_MANAGER = "pnpm@10.32.1"
 export const TEMPLATE_ID = "nextjs-template"
 
-/** Pinned version for @spawn-dock/* npm packages in generated projects (keep in sync with releases). */
-export const SPAWN_DOCK_JS_SDK_VERSION = "1.0.0-beta.1"
+/**
+ * Pinned @spawn-dock/* versions on npm for generated projects.
+ * Bump together; when you publish a unified 1.0.0-beta.x line to npm, set all three to that tag.
+ */
+export const SPAWN_DOCK_NPM_VERSIONS = {
+  "@spawn-dock/cli": "0.2.0",
+  "@spawn-dock/dev-tunnel": "1.0.9",
+  "@spawn-dock/mcp": "1.0.5",
+} as const
 
 export interface CliOptions {
   readonly token: string
@@ -280,9 +287,7 @@ export const patchPackageJsonContent = (input: string): string => {
 
   packageJson.devDependencies = {
     ...(packageJson.devDependencies ?? {}),
-    "@spawn-dock/cli": SPAWN_DOCK_JS_SDK_VERSION,
-    "@spawn-dock/dev-tunnel": SPAWN_DOCK_JS_SDK_VERSION,
-    "@spawn-dock/mcp": SPAWN_DOCK_JS_SDK_VERSION,
+    ...SPAWN_DOCK_NPM_VERSIONS,
   }
 
   return `${JSON.stringify(packageJson, null, 2)}\n`

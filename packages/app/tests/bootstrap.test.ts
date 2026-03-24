@@ -8,7 +8,7 @@ import {
   GENERATED_PACKAGE_MANAGER,
   normalizeDisplayName,
   patchPackageJsonContent,
-  SPAWN_DOCK_JS_SDK_VERSION,
+  SPAWN_DOCK_NPM_VERSIONS,
   resolveProjectContext,
   resolveClaimPath,
   validateNodeMajorVersion,
@@ -134,8 +134,10 @@ describe("patchPackageJsonContent", () => {
     expect(output).toContain("\"publish:github-pages\": \"node ./spawndock/publish.mjs\"")
     expect(output).toContain("\"agent\": \"spawn-dock agent\"")
     expect(output).toContain("\"agent:session\": \"spawn-dock session\"")
-    expect(output).toContain(`\"@spawn-dock/cli\": \"${SPAWN_DOCK_JS_SDK_VERSION}\"`)
-    expect(output).toContain(`\"@spawn-dock/dev-tunnel\": \"${SPAWN_DOCK_JS_SDK_VERSION}\"`)
-    expect(output).toContain(`\"@spawn-dock/mcp\": \"${SPAWN_DOCK_JS_SDK_VERSION}\"`)
+    expect(output).toContain(`\"@spawn-dock/cli\": \"${SPAWN_DOCK_NPM_VERSIONS["@spawn-dock/cli"]}\"`)
+    expect(output).toContain(
+      `\"@spawn-dock/dev-tunnel\": \"${SPAWN_DOCK_NPM_VERSIONS["@spawn-dock/dev-tunnel"]}\"`,
+    )
+    expect(output).toContain(`\"@spawn-dock/mcp\": \"${SPAWN_DOCK_NPM_VERSIONS["@spawn-dock/mcp"]}\"`)
   })
 })
