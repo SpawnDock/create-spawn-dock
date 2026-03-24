@@ -12,7 +12,6 @@ export const TEMPLATE_ID = "nextjs-template"
  * Bump together; when you publish a unified 1.0.0-beta.x line to npm, set all three to that tag.
  */
 export const SPAWN_DOCK_NPM_VERSIONS = {
-  "@spawn-dock/cli": "0.2.0",
   "@spawn-dock/dev-tunnel": "1.0.9",
   "@spawn-dock/mcp": "1.0.5",
 } as const
@@ -281,8 +280,8 @@ export const patchPackageJsonContent = (input: string): string => {
     "dev:next": "node ./spawndock/next.mjs",
     "dev:tunnel": "node ./spawndock/tunnel.mjs",
     "publish:github-pages": "node ./spawndock/publish.mjs",
-    agent: "spawn-dock agent",
-    "agent:session": "spawn-dock session",
+    agent: "node ./spawndock/agent.mjs",
+    "agent:session": "node ./spawndock/session.mjs",
   }
 
   packageJson.devDependencies = {

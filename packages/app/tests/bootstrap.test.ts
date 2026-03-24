@@ -132,9 +132,8 @@ describe("patchPackageJsonContent", () => {
     expect(output).toContain("\"dev:next\": \"node ./spawndock/next.mjs\"")
     expect(output).toContain("\"dev:tunnel\": \"node ./spawndock/tunnel.mjs\"")
     expect(output).toContain("\"publish:github-pages\": \"node ./spawndock/publish.mjs\"")
-    expect(output).toContain("\"agent\": \"spawn-dock agent\"")
-    expect(output).toContain("\"agent:session\": \"spawn-dock session\"")
-    expect(output).toContain(`\"@spawn-dock/cli\": \"${SPAWN_DOCK_NPM_VERSIONS["@spawn-dock/cli"]}\"`)
+    expect(output).toContain("\"agent\": \"node ./spawndock/agent.mjs\"")
+    expect(output).toContain("\"agent:session\": \"node ./spawndock/session.mjs\"")
     expect(output).toContain(
       `\"@spawn-dock/dev-tunnel\": \"${SPAWN_DOCK_NPM_VERSIONS["@spawn-dock/dev-tunnel"]}\"`,
     )

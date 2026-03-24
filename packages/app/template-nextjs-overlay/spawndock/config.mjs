@@ -47,3 +47,12 @@ export const resolveMcpApiKey = (config) => {
 
   throw new Error("Missing mcpApiKey in spawndock.config.json")
 }
+
+
+const resolveRuntimeFromValue = (value) =>
+  value === "opencode" || value === "codex" || value === "claude" ? value : undefined
+
+export const resolveAgentRuntime = (config, env = process.env) =>
+  resolveRuntimeFromValue(env.SPAWNDOCK_AGENT_RUNTIME) ??
+  resolveRuntimeFromValue(config.agentRuntime) ??
+  "opencode"
