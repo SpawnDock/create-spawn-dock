@@ -11,7 +11,7 @@ export const formatSuccess = (summary: BootstrapSummary): string =>
     `Preview URL: ${summary.previewOrigin}`,
     `MCP ready for: ${summary.mcpAgents.join(", ")}`,
     "Dependencies already installed with pnpm.",
-    `Run: cd "${summary.projectDir}" && pnpm run dev`,
+    `Run: cd "${summary.projectDir}" && pnpm run agent`,
   ].join("\n")
 
 const cliProgram = pipe(

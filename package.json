@@ -1,6 +1,6 @@
 {
   "name": "@spawn-dock/create",
-  "version": "0.2.0",
+  "version": "1.0.0-beta.1",
   "type": "module",
   "description": "SpawnDock bootstrap CLI for local TMA projects",
   "license": "ISC",
@@ -17,7 +17,8 @@
     "url": "https://github.com/SpawnDock/create/issues"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "beta"
   },
   "files": [
     "README.md",

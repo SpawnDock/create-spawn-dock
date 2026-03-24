@@ -11,7 +11,7 @@ describe("formatSuccess", () => {
     })
 
     expect(output).toContain("Dependencies already installed with pnpm.")
-    expect(output).toContain('Run: cd "/tmp/demo-project" && pnpm run dev')
+    expect(output).toContain('Run: cd "/tmp/demo-project" && pnpm run agent')
     expect(output).not.toContain('Run: cd "/tmp/demo-project" && npm run dev')
   })
 })

@@ -7,6 +7,9 @@ export const DEFAULT_TEMPLATE_BRANCH = "master"
 export const GENERATED_PACKAGE_MANAGER = "pnpm@10.32.1"
 export const TEMPLATE_ID = "nextjs-template"
 
+/** Pinned version for @spawn-dock/* npm packages in generated projects (keep in sync with releases). */
+export const SPAWN_DOCK_JS_SDK_VERSION = "1.0.0-beta.1"
+
 export interface CliOptions {
   readonly token: string
   readonly projectId?: string
@@ -271,14 +274,15 @@ export const patchPackageJsonContent = (input: string): string => {
     "dev:next": "node ./spawndock/next.mjs",
     "dev:tunnel": "node ./spawndock/tunnel.mjs",
     "publish:github-pages": "node ./spawndock/publish.mjs",
+    agent: "spawn-dock agent",
     "agent:session": "spawn-dock session",
   }
 
   packageJson.devDependencies = {
     ...(packageJson.devDependencies ?? {}),
-    "@spawn-dock/cli": "latest",
-    "@spawn-dock/dev-tunnel": "latest",
-    "@spawn-dock/mcp": "latest",
+    "@spawn-dock/cli": SPAWN_DOCK_JS_SDK_VERSION,
+    "@spawn-dock/dev-tunnel": SPAWN_DOCK_JS_SDK_VERSION,
+    "@spawn-dock/mcp": SPAWN_DOCK_JS_SDK_VERSION,
   }
 
   return `${JSON.stringify(packageJson, null, 2)}\n`

@@ -44,7 +44,7 @@ The package also ships a built-in TMA overlay and applies it after cloning
 - `.mcp.json`
 - `next.config.ts`
 - `public/tonconnect-manifest.json`
-- patching project scripts and `@spawn-dock/dev-tunnel`
+- patching project scripts (`pnpm run agent` → `spawn-dock agent`, dev/tunnel helpers) and `@spawn-dock/*` packages
 
 `spawndock/mcp.mjs` resolves `<controlPlaneUrl>/mcp/sse` from
 `spawndock.config.json`.
