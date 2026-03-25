@@ -1,5 +1,9 @@
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
-import { spawnSync, type SpawnSyncReturns } from "node:child_process"
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
+import {
+  spawnSync,
+  type SpawnSyncOptionsWithStringEncoding,
+  type SpawnSyncReturns,
+} from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { dirname, join, resolve } from "node:path"
 import { Console, Effect } from "effect"
@@ -9,6 +13,7 @@ import {
   buildMcpServerUrl,
   DEFAULT_INSPECT_PATH,
   DEFAULT_MCP_AGENTS,
+  GENERATED_PACKAGE_MANAGER,
   resolveClaimPath,
   type BootstrapClaim,
   type BootstrapSummary,
@@ -18,9 +23,7 @@ import {
   resolveProjectContext,
 } from "../core/bootstrap.js"
 
-const TEMPLATE_OVERLAY_DIR = resolve(
-  fileURLToPath(new URL("../../../template-nextjs-overlay", import.meta.url)),
-)
+const TEMPLATE_OVERLAY_DIR = resolveTemplateOverlayDir()
 
 interface BootstrapPreflightTarget {
   readonly projectDir: string
@@ -280,8 +283,29 @@ const installDependencies = (projectDir: string): Effect.Effect<void, Error> =>
       return
     }
 
-    yield* runCommand("pnpm", ["install"], projectDir)
-    yield* Console.log("Dependencies installed with pnpm.")
+    const pnpmResult = yield* runCommand("pnpm", ["install"], projectDir, false)
+    if (pnpmResult.status === 0) {
+      yield* Console.log("Dependencies installed with pnpm.")
+      return
+    }
+
+    const npxResult = yield* runCommand("npx", ["-y", GENERATED_PACKAGE_MANAGER, "install"], projectDir, false)
+    if (npxResult.status === 0) {
+      yield* Console.log("Dependencies installed with pnpm.")
+      return
+    }
+
+    yield* Effect.fail(
+      new Error(
+        [
+          "Failed to install project dependencies with pnpm.",
+          `corepack: ${formatCommandFailure(corepackResult, "corepack", ["pnpm", "install"])}`,
+          `pnpm: ${formatCommandFailure(pnpmResult, "pnpm", ["install"])}`,
+          `npx fallback: ${formatCommandFailure(npxResult, "npx", ["-y", GENERATED_PACKAGE_MANAGER, "install"])}`,
+          "Install Node.js 20+ with Corepack enabled, or install pnpm globally, then rerun the bootstrap command.",
+        ].join("\n"),
+      ),
+    )
   })
 
 const registerAgentIntegrations = (
@@ -330,8 +354,7 @@ const runCommand = (
 ): Effect.Effect<SpawnSyncReturns<string>, Error> =>
   Effect.try({
     try: () => {
-      const resolvedCommand = resolveCommandExecutable(command)
-      const result = spawnSync(resolvedCommand, [...args], {
+      const result = spawnCommand(command, [...args], {
         cwd,
         encoding: "utf8",
         stdio: "pipe",
@@ -349,7 +372,7 @@ const runCommand = (
 const commandExists = (command: string): Effect.Effect<boolean, Error> =>
   Effect.try({
     try: () => {
-      const result = spawnSync(resolveCommandExecutable(command), ["--help"], {
+      const result = spawnCommand(command, ["--help"], {
         cwd: process.cwd(),
         encoding: "utf8",
         stdio: "ignore",
@@ -465,6 +488,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isNodeError = (error: unknown): error is NodeJS.ErrnoException =>
   error instanceof Error
 
+const isMissingCommandError = (error: unknown): boolean =>
+  isNodeError(error) && error.code === "ENOENT"
+
 const toError = (cause: unknown): Error =>
   cause instanceof Error ? cause : new Error(String(cause))
 
@@ -513,6 +539,44 @@ const isKnownClaimErrorCode = (errorCode: string | null): boolean =>
   errorCode === "TokenNotFound" ||
   errorCode === "project_not_found"
 
+function resolveTemplateOverlayDir(): string {
+  const candidates = [
+    fileURLToPath(new URL("../../template-nextjs-overlay", import.meta.url)),
+    fileURLToPath(new URL("../../../template-nextjs-overlay", import.meta.url)),
+  ] as const
+
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0]
+}
+
+const spawnCommand = (
+  command: string,
+  args: ReadonlyArray<string>,
+  options: SpawnSyncOptionsWithStringEncoding,
+): SpawnSyncReturns<string> => {
+  const candidates = resolveCommandCandidates(command)
+  let lastResult: SpawnSyncReturns<string> | null = null
+
+  for (const candidate of candidates) {
+    const result = spawnSync(candidate, [...args], options)
+
+    if (!isMissingCommandError(result.error)) {
+      return result
+    }
+
+    lastResult = result
+  }
+
+  return lastResult ?? spawnSync(command, [...args], options)
+}
+
+const resolveCommandCandidates = (command: string): ReadonlyArray<string> => {
+  if (process.platform !== "win32" || /\.[^\\/]+$/.test(command)) {
+    return [command]
+  }
+
+  return [command, `${command}.cmd`, `${command}.exe`, `${command}.bat`]
+}
+
 const WINDOWS_CMD_SHIMS = new Set(["codex", "corepack", "npm", "npx", "pnpm"])
 
 export const resolveCommandExecutable = (
@@ -534,6 +598,8 @@ export const formatCommandFailure = (
   trimSpawnOutput(result.stderr) ||
   trimSpawnOutput(result.stdout) ||
   trimSpawnError(result.error) ||
+  (typeof result.status === "number" ? `exit code ${result.status}` : "") ||
+  (result.signal ? `terminated by signal ${result.signal}` : "") ||
   `Command failed: ${command} ${args.join(" ")}`
 
 const copyOverlayTreeSync = (sourceDir: string, targetDir: string): void => {
