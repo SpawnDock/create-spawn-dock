@@ -27,6 +27,14 @@ Your job is to build and improve a production-ready Telegram Mini App in this re
 - Avoid browser patterns that are fragile inside Telegram WebView: `alert()`, `confirm()`, `prompt()`, `target=\"_blank\"`, `window.open()`, and desktop-first navigation patterns.
 - Do not introduce `BrowserRouter`-style assumptions for TMA navigation.
 
+## TMA Knowledge Search
+
+- When local repo context is not enough for a Telegram Mini App or SpawnDock-specific implementation question, use the local `tma-knowledge-search` skill before generic web search.
+- In generated projects the local skill lives at `.agents/skills/tma-knowledge-search`.
+- Query the skill in English and ask one focused implementation question at a time.
+- Read the returned `answer` first, then inspect `sources` when they are present.
+- SpawnDock bootstrap also mirrors the same skill into `~/.codex/skills/tma-knowledge-search` when possible so Codex can discover it natively.
+
 ## Dev Flow
 
 - `pnpm run dev` is the primary local workflow. It starts the Next.js dev server and the SpawnDock dev tunnel together.
