@@ -36,6 +36,7 @@ npx --yes github:SpawnDock/create#main --token <pairing-token> [project-dir]
 The package also ships a built-in TMA overlay and applies it after cloning
 `SpawnDock/tma-project`. This overlay is responsible for:
 
+- `AGENTS.md`
 - `spawndock/dev.mjs`
 - `spawndock/next.mjs`
 - `spawndock/tunnel.mjs`
@@ -51,6 +52,7 @@ The package also ships a built-in TMA overlay and applies it after cloning
 
 - `opencode.json` is shipped by the template for OpenCode.
 - `.mcp.json` is shipped by the template for Claude Code.
+- `AGENTS.md` is shipped by the template for repo-level AI agent instructions.
 - if `codex` is installed locally, bootstrap also registers the same MCP server in
   the global Codex MCP config automatically.
 
