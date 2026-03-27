@@ -12,11 +12,19 @@ The canonical TMA starter lives in `https://github.com/SpawnDock/tma-project`.
 `@spawn-dock/create` clones that repo, applies the bundled SpawnDock TMA overlay,
 and then writes project-specific runtime files.
 
-## Usage
+## Quick Start
+
+The easiest way to create a project is through the Telegram bot — it generates a ready-to-run command with the pairing token already included:
+
+👉 **https://t.me/TMASpawnerBot**
+
+## Manual Usage
 
 ```bash
 npx -y @spawn-dock/create@beta --token <pairing-token> [project-dir]
 ```
+
+> **Note:** `--token` **is required** You can obtain a pairing token from [@TMASpawnerBot](https://t.me/TMASpawnerBot)
 
 If npm registry access is unavailable, the GitHub fallback remains:
 
